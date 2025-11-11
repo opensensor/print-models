@@ -1,0 +1,12 @@
+# Candidate active images from detected sequences
+# Format: sequence_id | sequence_length | path
+
+Seq   0 (len=  44) | printer-timelapses/20251107/20251107T002901.jpg
+Seq   0 (len=  44) | printer-timelapses/20251107/20251107T011100.jpg
+Seq   0 (len=  44) | printer-timelapses/20251107/20251107T015301.jpg
+Seq   1 (len=  18) | printer-timelapses/20251107/20251107T131700.jpg
+Seq   1 (len=  18) | printer-timelapses/20251107/20251107T133501.jpg
+Seq   1 (len=  18) | printer-timelapses/20251107/20251107T135301.jpg
+Seq   2 (len=  20) | printer-timelapses/20251108/20251108T130501.jpg
+Seq   2 (len=  20) | printer-timelapses/20251108/20251108T132310.jpg
+Seq   2 (len=  20) | printer-timelapses/20251108/20251108T134101.jpg
