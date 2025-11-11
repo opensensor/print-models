@@ -1,5 +1,8 @@
 .PHONY: help setup explore label train inference analyze clean
 
+# Python interpreter
+PYTHON = ./venv/bin/python
+
 help:
 	@echo "Printer-Offline Detection Model - Available Commands"
 	@echo ""
@@ -40,6 +43,12 @@ help:
 	@echo "  make monitor-fast   - Monitor with 10s poll"
 	@echo "  make monitor-date DATE=YYYYMMDD - Monitor specific date"
 	@echo "  ./demo_monitor.sh   - Demo with existing images"
+	@echo ""
+	@echo "Correct Mislabeled Predictions:"
+	@echo "  make correct-time DATE=YYYYMMDD TIME=HH:MM-HH:MM - Correct time range"
+	@echo "  make correct-images IMAGES='path1.jpg path2.jpg' - Correct specific images"
+	@echo "  make correct-retrain DATE=YYYYMMDD TIME=HH:MM-HH:MM - Correct & auto-retrain"
+	@echo "  See QUICK_CORRECTION_GUIDE.md for examples"
 	@echo ""
 	@echo "Utilities:"
 	@echo "  make clean          - Remove generated files (keep labels)"
@@ -152,6 +161,31 @@ monitor-date:
 		echo "Available dates:"; \
 		ls -1 printer-timelapses/ | grep -E '^[0-9]{8}$$' | tail -5; \
 	fi
+
+# Correct mislabeled predictions
+correct-time:
+	@if [ -z "$(DATE)" ] || [ -z "$(TIME)" ]; then \
+		echo "Error: DATE and TIME required."; \
+		echo "Usage: make correct-time DATE=20251111 TIME=08:54-09:25"; \
+		exit 1; \
+	fi
+	$(PYTHON) src/correct_labels.py --date $(DATE) --time-range $(TIME)
+
+correct-images:
+	@if [ -z "$(IMAGES)" ]; then \
+		echo "Error: IMAGES required."; \
+		echo "Usage: make correct-images IMAGES='path1.jpg path2.jpg'"; \
+		exit 1; \
+	fi
+	$(PYTHON) src/correct_labels.py --image-paths $(IMAGES)
+
+correct-retrain:
+	@if [ -z "$(DATE)" ] || [ -z "$(TIME)" ]; then \
+		echo "Error: DATE and TIME required."; \
+		echo "Usage: make correct-retrain DATE=20251111 TIME=08:54-09:25"; \
+		exit 1; \
+	fi
+	$(PYTHON) src/correct_labels.py --date $(DATE) --time-range $(TIME) --auto-retrain
 
 status:
 	@echo "=== Project Status ==="

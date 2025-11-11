@@ -108,21 +108,39 @@ class PrintMonitor:
                 'last_update': datetime.now().isoformat()
             }, f, indent=2)
     
-    def classify_image(self, image_path, model):
-        """Classify a single image."""
-        try:
-            image = Image.open(image_path).convert('RGB')
-            image_tensor = self.transform(image).unsqueeze(0).to(self.device)
-            
-            with torch.no_grad():
-                outputs = model(image_tensor)
-                probabilities = torch.nn.functional.softmax(outputs, dim=1)
-                confidence, predicted = torch.max(probabilities, 1)
-            
-            return predicted.item(), confidence.item()
-        except Exception as e:
-            print(f"Error classifying {image_path}: {e}")
-            return None, None
+    def classify_image(self, image_path, model, max_retries=3, retry_delay=0.5):
+        """Classify a single image with retry logic for incomplete file uploads."""
+        import time
+        import os
+
+        for attempt in range(max_retries):
+            try:
+                # Check if file exists and has non-zero size
+                if not os.path.exists(image_path) or os.path.getsize(image_path) == 0:
+                    if attempt < max_retries - 1:
+                        time.sleep(retry_delay)
+                        continue
+                    else:
+                        print(f"Error: {image_path} is empty or doesn't exist after {max_retries} attempts")
+                        return None, None
+
+                image = Image.open(image_path).convert('RGB')
+                image_tensor = self.transform(image).unsqueeze(0).to(self.device)
+
+                with torch.no_grad():
+                    outputs = model(image_tensor)
+                    probabilities = torch.nn.functional.softmax(outputs, dim=1)
+                    confidence, predicted = torch.max(probabilities, 1)
+
+                return predicted.item(), confidence.item()
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    # File might still be uploading, wait and retry
+                    time.sleep(retry_delay)
+                else:
+                    # Final attempt failed
+                    print(f"Error classifying {image_path} after {max_retries} attempts: {e}")
+                    return None, None
     
     def get_new_images(self):
         """Find new images that haven't been processed."""
@@ -220,10 +238,14 @@ class PrintMonitor:
 
                             last_status = "active"
                         else:
-                            # Only print offline status if it changed from active
+                            # Print offline status if it changed from active, or if this is the first image
                             if last_status == "active":
                                 print(f"⚫ [{timestamp}] {filename} - Printer went offline")
-                                last_status = "offline"
+                            elif last_status is None:
+                                # First image - show status
+                                print(f"⚫ [{timestamp}] {filename} - Printer offline")
+                            # else: already offline, don't print
+                            last_status = "offline"
 
                         # Mark as processed
                         self.processed_images.add(str(image_path))
