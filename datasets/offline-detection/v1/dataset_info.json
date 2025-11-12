@@ -1,0 +1,12 @@
+{
+  "version": "1.0",
+  "description": "Initial training set: 60 active, 90 offline",
+  "created": "2025-11-12T07:33:26.093233",
+  "total_images": 169,
+  "classes": {
+    "offline": 90,
+    "active": 79
+  },
+  "dataset_type": "offline-detection",
+  "source_labels": "data/labels.json"
+}
